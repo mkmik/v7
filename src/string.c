@@ -6,7 +6,7 @@
 #include "internal.h"
 
 static val_t String_ctor(struct v7 *v7, val_t this_obj, val_t args) {
-  val_t arg0 = v7_array_at(v7, args, 0);
+  val_t arg0 = v7_array_get(v7, args, 0);
   val_t res = v7_is_string(arg0) ? arg0 : (
       v7_is_undefined(arg0) ? v7_create_string(v7, "", 0, 1) :
       to_string(v7, arg0));
@@ -27,7 +27,7 @@ static val_t Str_fromCharCode(struct v7 *v7, val_t this_obj, val_t args) {
   (void) this_obj;
   for (i = 0; i < num_args; i++) {
     char buf[10];
-    val_t arg = v7_array_at(v7, args, i);
+    val_t arg = v7_array_get(v7, args, i);
     Rune r = (Rune) v7_to_double(arg);
     int n = runetochar(buf, &r);
     val_t s = v7_create_string(v7, buf, n, 1);
@@ -41,7 +41,7 @@ static val_t Str_charCodeAt(struct v7 *v7, val_t this_obj, val_t args) {
   size_t i = 0, n;
   val_t s = to_string(v7, this_obj);
   const char *p = v7_to_string(v7, &s, &n);
-  val_t res = v7_create_number(NAN), arg = v7_array_at(v7, args, 0);
+  val_t res = v7_create_number(NAN), arg = v7_array_get(v7, args, 0);
   double at = v7_to_double(arg);
 
   if (v7_is_double(arg) && at >= 0 && at < n && v7_is_string(s)) {
@@ -77,7 +77,7 @@ static val_t Str_concat(struct v7 *v7, val_t this_obj, val_t args) {
   int i, num_args = v7_array_length(v7, args);
 
   for (i = 0; i < num_args; i++) {
-    val_t str = to_string(v7, v7_array_at(v7, args, i));
+    val_t str = to_string(v7, v7_array_get(v7, args, i));
     res = s_concat(v7, res, str);
   }
 
@@ -86,8 +86,8 @@ static val_t Str_concat(struct v7 *v7, val_t this_obj, val_t args) {
 
 static val_t s_index_of(struct v7 *v7, val_t this_obj, val_t args, int last) {
   val_t s = to_string(v7, this_obj);
-  val_t arg0 = v7_array_at(v7, args, 0);
-  val_t arg1 = i_value_of(v7, v7_array_at(v7, args, 1));
+  val_t arg0 = v7_array_get(v7, args, 0);
+  val_t arg1 = i_value_of(v7, v7_array_get(v7, args, 1));
   val_t sub, res = v7_create_number(-1);
   size_t i, n1, n2, fromIndex;
   const char *p1, *p2;
@@ -143,7 +143,7 @@ static val_t Str_lastIndexOf(struct v7 *v7, val_t this_obj, val_t args) {
 }
 
 static val_t Str_localeCompare(struct v7 *v7, val_t this_obj, val_t args) {
-  val_t arg0 = i_value_of(v7, v7_array_at(v7, args, 0));
+  val_t arg0 = i_value_of(v7, v7_array_get(v7, args, 0));
   val_t s = i_value_of(v7, this_obj);
   val_t res = v7_create_undefined();
 
@@ -431,7 +431,7 @@ static val_t Str_length(struct v7 *v7, val_t this_obj, val_t args) {
 V7_PRIVATE long arg_long(struct v7 *v7, val_t args, int n, long default_value) {
   char buf[40];
   size_t l;
-  val_t arg_n = i_value_of(v7, v7_array_at(v7, args, n));
+  val_t arg_n = i_value_of(v7, v7_array_get(v7, args, n));
   double d;
   if (v7_is_double(arg_n)) {
     d = v7_to_double(arg_n);
@@ -469,7 +469,7 @@ static val_t Str_slice(struct v7 *v7, val_t this_obj, val_t args) {
 static val_t Str_split(struct v7 *v7, val_t this_obj, val_t args) {
   val_t res = v7_create_array(v7);
   val_t s = to_string(v7, this_obj);
-  val_t arg0 = i_value_of(v7, v7_array_at(v7, args, 0));
+  val_t arg0 = i_value_of(v7, v7_array_get(v7, args, 0));
   long num_elems = 0, limit = arg_long(v7, args, 1, LONG_MAX);
   size_t n1, n2, i, j;
   const char *s1 = v7_to_string(v7, &s, &n1);
@@ -483,7 +483,7 @@ static val_t Str_split(struct v7 *v7, val_t this_obj, val_t args) {
       if (num_elems >= limit) break;
       if (v7_is_string(arg0) && (i > 0 || n2 > 0) &&
           memcmp(s1 + i, s2, n2) == 0) {
-        v7_array_append(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
+        v7_array_push(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
         s1 = v7_to_string(v7, &s, &n1);
         s2 = v7_to_string(v7, &arg0, &n2);
         num_elems++;
@@ -493,7 +493,7 @@ static val_t Str_split(struct v7 *v7, val_t this_obj, val_t args) {
           /* TODO(lsm): fix this */
           struct slre_cap *cap = &loot.caps[0];
           i = cap->start - s1;
-          v7_array_append(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
+          v7_array_push(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
           s1 = v7_to_string(v7, &s, &n1);
           s2 = v7_to_string(v7, &arg0, &n2);
           num_elems++;
@@ -505,7 +505,7 @@ static val_t Str_split(struct v7 *v7, val_t this_obj, val_t args) {
       }
     }
     if (j < i && n2 > 0) {
-      v7_array_append(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
+      v7_array_push(v7, res, v7_create_string(v7, s1 + j, i - j, 1));
     }
   }
 
